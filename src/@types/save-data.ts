@@ -2,6 +2,7 @@ import type { PokeballCounts } from "#app/battle-scene";
 import type { Tutorial } from "#app/tutorial";
 import type { BattleType } from "#enums/battle-type";
 import type { GameModes } from "#enums/game-modes";
+import type { MathChallengeMode } from "#enums/math-challenge-mode";
 import type { MoveId } from "#enums/move-id";
 import type { MysteryEncounterType } from "#enums/mystery-encounter-type";
 import type { Nature } from "#enums/nature";
@@ -73,6 +74,7 @@ export interface SessionSaveData {
    * Counts the amount of pokemon fainted in your party during the current arena encounter.
    */
   playerFaints: number;
+  mathChallengeModes?: MathChallengeMode[];
 }
 
 export interface Unlocks {

@@ -25,6 +25,7 @@ import type { Device } from "#enums/devices";
 import { DexAttr } from "#enums/dex-attr";
 import { GameDataType } from "#enums/game-data-type";
 import { GameModes } from "#enums/game-modes";
+import { MathChallengeMode } from "#enums/math-challenge-mode";
 import { Nature } from "#enums/nature";
 import { PlayerGender } from "#enums/player-gender";
 import { SpeciesId } from "#enums/species-id";
@@ -779,6 +780,7 @@ export class GameData {
       mysteryEncounterType: globalScene.currentBattle.mysteryEncounter?.encounterType ?? -1,
       mysteryEncounterSaveData: globalScene.mysteryEncounterSaveData,
       playerFaints: globalScene.arena.playerFaints,
+      mathChallengeModes: globalScene.mathChallengeModes,
     } as SessionSaveData;
   }
 
@@ -880,6 +882,9 @@ export class GameData {
     }
 
     globalScene.gameMode = getGameMode(fromSession.gameMode || GameModes.CLASSIC);
+    globalScene.mathChallengeModes = fromSession.mathChallengeModes?.length
+      ? fromSession.mathChallengeModes
+      : [MathChallengeMode.MULTIPLICATION];
     if (fromSession.challenges) {
       globalScene.gameMode.challenges = fromSession.challenges.map(c => c.toChallenge());
     }

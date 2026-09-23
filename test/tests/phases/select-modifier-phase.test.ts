@@ -11,8 +11,8 @@ import { SpeciesId } from "#enums/species-id";
 import { UiMode } from "#enums/ui-mode";
 import { PlayerPokemon } from "#field/pokemon";
 import type { CustomModifierSettings } from "#modifiers/modifier-type";
-import { ModifierTypeOption } from "#modifiers/modifier-type";
-import { SelectModifierPhase } from "#phases/select-modifier-phase";
+import { ModifierTypeOption, upgradeModifierTypeOption } from "#modifiers/modifier-type";
+import { getMathChallengeMaxFactor, SelectModifierPhase } from "#phases/select-modifier-phase";
 import { GameManager } from "#test/framework/game-manager";
 import { initSceneWithoutEncounterPhase } from "#test/utils/game-manager-utils";
 import { ModifierSelectUiHandler } from "#ui/modifier-select-ui-handler";
@@ -49,6 +49,8 @@ describe("SelectModifierPhase", () => {
     scene.phaseManager.unshiftPhase(selectModifierPhase);
     await game.phaseInterceptor.to("SelectModifierPhase");
 
+    scene.ui.processInput(Button.SUBMIT);
+    await vi.waitFor(() => expect(scene.ui.mode).toBe(UiMode.MODIFIER_SELECT));
     expect(scene.ui.mode).toBe(UiMode.MODIFIER_SELECT);
   });
 
@@ -57,6 +59,8 @@ describe("SelectModifierPhase", () => {
     game.move.select(MoveId.FISSURE);
     await game.phaseInterceptor.to("SelectModifierPhase");
 
+    scene.ui.processInput(Button.SUBMIT);
+    await vi.waitFor(() => expect(scene.ui.mode).toBe(UiMode.MODIFIER_SELECT));
     expect(scene.ui.mode).toBe(UiMode.MODIFIER_SELECT);
     const modifierSelectHandler = scene.ui.handlers.find(
       h => h instanceof ModifierSelectUiHandler,
@@ -83,6 +87,30 @@ describe("SelectModifierPhase", () => {
     const cost1 = selectModifierPhase1.getRerollCost(false);
     const cost2 = selectModifierPhase2.getRerollCost(false);
     expect(cost2).toEqual(cost1 * 2);
+  });
+
+  it("should progressively increase the math challenge factor maximum", () => {
+    expect(getMathChallengeMaxFactor(1)).toBe(12);
+    expect(getMathChallengeMaxFactor(150)).toBe(100);
+    expect(getMathChallengeMaxFactor(151)).toBe(100);
+    expect(getMathChallengeMaxFactor(75)).toBeGreaterThan(12);
+    expect(getMathChallengeMaxFactor(75)).toBeLessThan(100);
+  });
+
+  it("should upgrade a free modifier option without mutating the original type", () => {
+    const option = new ModifierTypeOption(modifierTypes.POTION(), 0);
+    option.type.setTier(ModifierTier.COMMON);
+    const originalType = option.type;
+    const originalTier = originalType.tier;
+    const upgradedOption = upgradeModifierTypeOption(option);
+
+    expect(upgradedOption).not.toBe(option);
+    expect(upgradedOption.type).not.toBe(originalType);
+    expect(upgradedOption.type.id).toBe(originalType.id);
+    expect(upgradedOption.cost).toBe(0);
+    expect(upgradedOption.upgradeCount).toBe(1);
+    expect(upgradedOption.type.tier).toBe((originalTier ?? 0) + 1);
+    expect(originalType.tier).toBe(originalTier);
   });
 
   it.todo("should generate random modifiers from reroll", async () => {

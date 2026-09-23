@@ -13,6 +13,7 @@ import { modifierTypes } from "#data/data-lists";
 import { Gender } from "#data/gender";
 import { BattleType } from "#enums/battle-type";
 import { GameModes } from "#enums/game-modes";
+import { MathChallengeMode } from "#enums/math-challenge-mode";
 import { ModifierPoolType } from "#enums/modifier-pool-type";
 import { UiMode } from "#enums/ui-mode";
 import { Unlockables } from "#enums/unlockables";
@@ -98,9 +99,7 @@ export class TitlePhase extends Phase {
         handler: () => {
           const setModeAndEnd = (gameMode: GameModes) => {
             this.gameMode = gameMode;
-            ui.setMode(UiMode.MESSAGE);
-            ui.clearText();
-            this.end();
+            this.showMathModeSelection([MathChallengeMode.MULTIPLICATION], () => this.end());
           };
           const newGameOptions: OptionSelectItem[] = [];
           newGameOptions.push({
@@ -202,7 +201,9 @@ export class TitlePhase extends Phase {
       const success = await globalScene.gameData.loadSession(slotId);
       if (success) {
         this.loaded = true;
-        globalScene.ui.showText(i18next.t("menu:sessionSuccess"), null, () => this.end());
+        globalScene.ui.showText(i18next.t("menu:sessionSuccess"), null, () =>
+          this.showMathModeSelection(globalScene.mathChallengeModes, () => this.end()),
+        );
       } else {
         this.end();
       }
@@ -210,6 +211,51 @@ export class TitlePhase extends Phase {
       console.error(err);
       globalScene.ui.showText(i18next.t("menu:failedToLoadSession"), null);
     }
+  }
+
+  private showMathModeSelection(selectedModes: MathChallengeMode[], onComplete: () => void): void {
+    const { ui } = globalScene;
+    const selected = new Set(selectedModes.length > 0 ? selectedModes : [MathChallengeMode.MULTIPLICATION]);
+    const modeLabels: Record<MathChallengeMode, string> = {
+      [MathChallengeMode.MULTIPLICATION]: i18next.t("battle:mathModes.multiplication"),
+      [MathChallengeMode.PERCENTAGE]: i18next.t("battle:mathModes.percentage"),
+    };
+    const showSelection = () => {
+      const options: OptionSelectItem[] = (Object.values(MathChallengeMode) as MathChallengeMode[]).map(mode => ({
+        label: `${selected.has(mode) ? "[x]" : "[ ]"} ${modeLabels[mode]}`,
+        keepOpen: true,
+        handler: () => {
+          if (selected.has(mode) && selected.size === 1) {
+            return false;
+          }
+          selected.has(mode) ? selected.delete(mode) : selected.add(mode);
+          showSelection();
+          return true;
+        },
+      }));
+      options.push({
+        label: i18next.t("battle:mathModes.start"),
+        handler: () => {
+          globalScene.mathChallengeModes = [...selected];
+          ui.setMode(UiMode.MESSAGE);
+          ui.clearText();
+          onComplete();
+          return true;
+        },
+      });
+      options.push({
+        label: i18next.t("menu:cancel"),
+        handler: () => {
+          globalScene.phaseManager.toTitleScreen();
+          super.end();
+          return true;
+        },
+      });
+      ui.setMode(UiMode.MESSAGE).then(() => {
+        ui.setMode(UiMode.OPTION_SELECT, { options, yOffset: 48, blockCancelButton: true });
+      });
+    };
+    showSelection();
   }
 
   initDailyRun(): void {
@@ -327,7 +373,7 @@ export class TitlePhase extends Phase {
           .getSeed()
           .then(seed => {
             if (seed) {
-              generateDaily(seed);
+              this.showMathModeSelection([MathChallengeMode.MULTIPLICATION], () => generateDaily(seed));
             } else {
               throw new Error("Daily run seed is null!");
             }
@@ -344,7 +390,7 @@ export class TitlePhase extends Phase {
               ? activeOverrides.DAILY_RUN_SEED_OVERRIDE
               : JSON.stringify(activeOverrides.DAILY_RUN_SEED_OVERRIDE);
         }
-        generateDaily(seed);
+        this.showMathModeSelection([MathChallengeMode.MULTIPLICATION], () => generateDaily(seed));
       }
     });
   }

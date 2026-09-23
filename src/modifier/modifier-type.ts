@@ -2905,6 +2905,19 @@ export class ModifierTypeOption {
   }
 }
 
+export function upgradeModifierTypeOption(option: ModifierTypeOption): ModifierTypeOption {
+  const baseTier = option.type.tier ?? option.type.getOrInferTier(ModifierPoolType.PLAYER);
+  if (baseTier == null || baseTier >= ModifierTier.MASTER) {
+    return option;
+  }
+
+  const upgradedTier = baseTier + 1;
+
+  const upgradedType = Object.assign(Object.create(Object.getPrototypeOf(option.type)), option.type) as ModifierType;
+  upgradedType.setTier(upgradedTier);
+  return new ModifierTypeOption(upgradedType, option.upgradeCount + 1, option.cost);
+}
+
 /**
  * Calculates the team's luck value.
  * @param party The player's party.

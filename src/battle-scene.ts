@@ -43,6 +43,7 @@ import { BattlerTagType } from "#enums/battler-tag-type";
 import { BiomeId } from "#enums/biome-id";
 import { FormChangeItem } from "#enums/form-change-item";
 import { GameModes } from "#enums/game-modes";
+import { MathChallengeMode } from "#enums/math-challenge-mode";
 import { ModifierPoolType } from "#enums/modifier-pool-type";
 import { MoveId } from "#enums/move-id";
 import { MysteryEncounterMode } from "#enums/mystery-encounter-mode";
@@ -223,6 +224,7 @@ export class BattleScene extends SceneBase {
 
   public arena: Arena;
   public gameMode: GameMode;
+  public mathChallengeModes: MathChallengeMode[] = [MathChallengeMode.MULTIPLICATION];
   public score: number;
   public lockModifierTiers: boolean;
   public trainer: Phaser.GameObjects.Sprite;

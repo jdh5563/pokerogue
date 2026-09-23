@@ -121,7 +121,7 @@ export abstract class FormModalUiHandler extends ModalUiHandler {
 
       // Auto focus the first input field after a short delay, to prevent accidental inputs
       setTimeout(() => {
-        this.inputs[0]?.setFocus();
+        this.inputs[0]?.setFocus?.();
       }, 50);
 
       // Override the pointerDown event for the buttonBgs to call the `submitAction` and `cancelAction`

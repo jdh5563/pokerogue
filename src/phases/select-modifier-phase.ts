@@ -1,6 +1,7 @@
 import { audioManager } from "#app/global-audio-manager";
 import { globalScene } from "#app/global-scene";
 import { activeOverrides } from "#app/overrides";
+import { MathChallengeMode } from "#enums/math-challenge-mode";
 import { ModifierPoolType } from "#enums/modifier-pool-type";
 import type { ModifierTier } from "#enums/modifier-tier";
 import { PartyUiMode } from "#enums/party-ui-mode";
@@ -24,16 +25,23 @@ import {
   RememberMoveModifierType,
   regenerateModifierPoolThresholds,
   TmModifierType,
+  upgradeModifierTypeOption,
 } from "#modifiers/modifier-type";
 import { BattlePhase } from "#phases/battle-phase";
 import type { ConfirmModeConfig } from "#types/ui-types";
+import type { MathChallengeConfig } from "#ui/math-challenge-ui-handler";
 import type { ModifierSelectUiHandler } from "#ui/modifier-select-ui-handler";
 import { SHOP_OPTIONS_ROW_LIMIT } from "#ui/modifier-select-ui-handler";
 import { PartyOption, PartyUiHandler } from "#ui/party-ui-handler";
-import { NumberHolder } from "#utils/common";
+import { NumberHolder, randSeedInt, randSeedIntRange } from "#utils/common";
 import i18next from "i18next";
 
 export type ModifierSelectCallback = (rowCursor: number, cursor: number) => boolean;
+
+export function getMathChallengeMaxFactor(waveIndex: number): number {
+  const progression = Math.max(0, waveIndex - 1);
+  return Math.min(100, 12 + Math.floor((progression * 88) / 149));
+}
 
 export class SelectModifierPhase extends BattlePhase {
   public readonly phaseName = "SelectModifierPhase";
@@ -123,6 +131,42 @@ export class SelectModifierPhase extends BattlePhase {
         }
       }
     };
+
+    const hasShop = globalScene.gameMode.getShopStatus();
+    const hasShopOptions =
+      getPlayerShopModifierTypeOptionsForWave(globalScene.currentBattle.waveIndex, globalScene.getWaveMoneyAmount(1))
+        .length > 0;
+    if (
+      !this.customModifierSettings
+      && !this.isCopy
+      && hasShop
+      && hasShopOptions
+      && this.typeOptions.some(option => option.cost === 0)
+    ) {
+      const selectedModes =
+        globalScene.mathChallengeModes.length > 0 ? globalScene.mathChallengeModes : [MathChallengeMode.MULTIPLICATION];
+      const mode = selectedModes[randSeedInt(selectedModes.length)];
+      const maxFactor = getMathChallengeMaxFactor(globalScene.currentBattle.waveIndex);
+      const factorA = mode === MathChallengeMode.PERCENTAGE ? randSeedIntRange(1, 99) : randSeedIntRange(2, maxFactor);
+      const factorB =
+        mode === MathChallengeMode.PERCENTAGE ? randSeedIntRange(1, 1000) : randSeedIntRange(2, maxFactor);
+      const challengeConfig: MathChallengeConfig = {
+        mode,
+        factorA,
+        factorB,
+        buttonActions: [],
+        answer: correct => {
+          if (correct) {
+            this.typeOptions = this.typeOptions.map(option =>
+              option.cost === 0 ? upgradeModifierTypeOption(option) : option,
+            );
+          }
+          this.resetModifierSelect(modifierSelectCallback);
+        },
+      };
+      globalScene.ui.setModeWithoutClear(UiMode.MATH_CHALLENGE, challengeConfig);
+      return;
+    }
 
     this.resetModifierSelect(modifierSelectCallback);
   }
