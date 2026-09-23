@@ -219,6 +219,7 @@ export class TitlePhase extends Phase {
     const modeLabels: Record<MathChallengeMode, string> = {
       [MathChallengeMode.MULTIPLICATION]: i18next.t("battle:mathModes.multiplication"),
       [MathChallengeMode.PERCENTAGE]: i18next.t("battle:mathModes.percentage"),
+      [MathChallengeMode.ORDER_OF_OPERATIONS]: i18next.t("battle:mathModes.orderOfOperations"),
     };
     const showSelection = () => {
       const options: OptionSelectItem[] = (Object.values(MathChallengeMode) as MathChallengeMode[]).map(mode => ({

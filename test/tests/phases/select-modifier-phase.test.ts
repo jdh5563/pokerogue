@@ -12,7 +12,12 @@ import { UiMode } from "#enums/ui-mode";
 import { PlayerPokemon } from "#field/pokemon";
 import type { CustomModifierSettings } from "#modifiers/modifier-type";
 import { ModifierTypeOption, upgradeModifierTypeOption } from "#modifiers/modifier-type";
-import { getMathChallengeMaxFactor, SelectModifierPhase } from "#phases/select-modifier-phase";
+import {
+  evaluateOrderOfOperations,
+  generateOrderOfOperationsProblem,
+  getMathChallengeMaxFactor,
+  SelectModifierPhase,
+} from "#phases/select-modifier-phase";
 import { GameManager } from "#test/framework/game-manager";
 import { initSceneWithoutEncounterPhase } from "#test/utils/game-manager-utils";
 import { ModifierSelectUiHandler } from "#ui/modifier-select-ui-handler";
@@ -95,6 +100,25 @@ describe("SelectModifierPhase", () => {
     expect(getMathChallengeMaxFactor(151)).toBe(100);
     expect(getMathChallengeMaxFactor(75)).toBeGreaterThan(12);
     expect(getMathChallengeMaxFactor(75)).toBeLessThan(100);
+  });
+
+  it("should evaluate order of operations using PEMDAS", () => {
+    expect(evaluateOrderOfOperations("2+3x4")).toBe(14);
+    expect(evaluateOrderOfOperations("(2+3)x4")).toBe(20);
+    expect(evaluateOrderOfOperations("18/3+2x4")).toBe(14);
+    expect(evaluateOrderOfOperations("20/(2+3)")).toBe(4);
+    expect(() => evaluateOrderOfOperations("5/2")).toThrow();
+    expect(() => evaluateOrderOfOperations("5/0")).toThrow();
+  });
+
+  it("should generate valid order of operations problems", () => {
+    const problem = generateOrderOfOperationsProblem();
+    const numbers = problem.expression.match(/\d+/g) ?? [];
+
+    expect(numbers.length).toBeGreaterThanOrEqual(3);
+    expect(numbers.length).toBeLessThanOrEqual(6);
+    expect(numbers.every(number => Number(number) >= 1 && Number(number) <= 12)).toBe(true);
+    expect(problem.answerValue).toBe(evaluateOrderOfOperations(problem.expression));
   });
 
   it("should upgrade a free modifier option without mutating the original type", () => {

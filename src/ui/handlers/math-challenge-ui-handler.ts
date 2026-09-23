@@ -1,4 +1,4 @@
-import { MathChallengeMode } from "#enums/math-challenge-mode";
+import type { MathChallengeMode } from "#enums/math-challenge-mode";
 import type { ModalConfig } from "#types/ui-types";
 import type { InputFieldConfig } from "#ui/form-modal-ui-handler";
 import { FormModalUiHandler } from "#ui/form-modal-ui-handler";
@@ -6,17 +6,14 @@ import i18next from "i18next";
 
 export interface MathChallengeConfig extends ModalConfig {
   mode: MathChallengeMode;
-  factorA: number;
-  factorB: number;
+  expression: string;
+  answerValue: number;
   answer: (correct: boolean) => void;
 }
 
 export class MathChallengeUiHandler extends FormModalUiHandler {
   getModalTitle(config?: MathChallengeConfig): string {
-    return i18next.t(`battle:mathChallenge.${config?.mode ?? MathChallengeMode.MULTIPLICATION}`, {
-      factorA: config?.factorA,
-      factorB: config?.factorB,
-    });
+    return i18next.t("battle:mathChallenge.question", { expression: config?.expression });
   }
 
   getWidth(_config?: ModalConfig): number {
@@ -59,11 +56,7 @@ export class MathChallengeUiHandler extends FormModalUiHandler {
     };
     this.submitAction = () => {
       this.sanitizeInputs();
-      const answer =
-        config.mode === MathChallengeMode.PERCENTAGE
-          ? (config.factorA / 100) * config.factorB
-          : config.factorA * config.factorB;
-      resolveAnswer(Number(this.inputs[0].text) === answer);
+      resolveAnswer(Number(this.inputs[0].text) === config.answerValue);
     };
     return true;
   }

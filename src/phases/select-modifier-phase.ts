@@ -43,6 +43,94 @@ export function getMathChallengeMaxFactor(waveIndex: number): number {
   return Math.min(100, 12 + Math.floor((progression * 88) / 149));
 }
 
+const ORDER_OPERATORS = ["+", "-", "x", "/"] as const;
+
+export function evaluateOrderOfOperations(expression: string): number {
+  const tokens = expression.match(/\d+|[()+\-x/]/g) ?? [];
+  let position = 0;
+
+  const parseExpression = (): number => {
+    let value = parseTerm();
+    while (tokens[position] === "+" || tokens[position] === "-") {
+      const operator = tokens[position++];
+      const right = parseTerm();
+      value = operator === "+" ? value + right : value - right;
+    }
+    return value;
+  };
+
+  const parseTerm = (): number => {
+    let value = parsePrimary();
+    while (tokens[position] === "x" || tokens[position] === "/") {
+      const operator = tokens[position++];
+      const right = parsePrimary();
+      if (operator === "/") {
+        if (right === 0 || value % right !== 0) {
+          throw new Error("Invalid division");
+        }
+        value /= right;
+      } else {
+        value *= right;
+      }
+    }
+    return value;
+  };
+
+  const parsePrimary = (): number => {
+    if (tokens[position] === "(") {
+      position++;
+      const value = parseExpression();
+      if (tokens[position++] !== ")") {
+        throw new Error("Unmatched parenthesis");
+      }
+      return value;
+    }
+    const value = Number(tokens[position++]);
+    if (!Number.isInteger(value)) {
+      throw new Error("Invalid number");
+    }
+    return value;
+  };
+
+  const answer = parseExpression();
+  if (position !== tokens.length) {
+    throw new Error("Unexpected token");
+  }
+  return answer;
+}
+
+export function generateOrderOfOperationsProblem(): { expression: string; answerValue: number } {
+  for (let attempt = 0; attempt < 100; attempt++) {
+    const numberCount = randSeedIntRange(3, 6);
+    const numbers = Array.from({ length: numberCount }, () => randSeedIntRange(1, 12));
+    const operators = Array.from(
+      { length: numberCount - 1 },
+      () => ORDER_OPERATORS[randSeedInt(ORDER_OPERATORS.length)],
+    );
+    let expression = "";
+    let index = 0;
+    while (index < numberCount) {
+      const canGroup = index < numberCount - 1 && randSeedInt(2) === 0;
+      if (canGroup) {
+        expression += `(${numbers[index]}${operators[index]}${numbers[index + 1]})`;
+        index += 2;
+      } else {
+        expression += numbers[index];
+        index++;
+      }
+      if (index < numberCount) {
+        expression += operators[index - 1];
+      }
+    }
+    try {
+      return { expression, answerValue: evaluateOrderOfOperations(expression) };
+    } catch {
+      continue;
+    }
+  }
+  return { expression: "1+1+1", answerValue: 3 };
+}
+
 export class SelectModifierPhase extends BattlePhase {
   public readonly phaseName = "SelectModifierPhase";
   private readonly rerollCount: number;
@@ -147,13 +235,23 @@ export class SelectModifierPhase extends BattlePhase {
         globalScene.mathChallengeModes.length > 0 ? globalScene.mathChallengeModes : [MathChallengeMode.MULTIPLICATION];
       const mode = selectedModes[randSeedInt(selectedModes.length)];
       const maxFactor = getMathChallengeMaxFactor(globalScene.currentBattle.waveIndex);
-      const factorA = mode === MathChallengeMode.PERCENTAGE ? randSeedIntRange(1, 99) : randSeedIntRange(2, maxFactor);
-      const factorB =
-        mode === MathChallengeMode.PERCENTAGE ? randSeedIntRange(1, 1000) : randSeedIntRange(2, maxFactor);
+      const problem =
+        mode === MathChallengeMode.ORDER_OF_OPERATIONS
+          ? generateOrderOfOperationsProblem()
+          : mode === MathChallengeMode.PERCENTAGE
+            ? (() => {
+                const factorA = randSeedIntRange(1, 99);
+                const factorB = randSeedIntRange(1, 1000);
+                return { expression: `${factorA}% of ${factorB}`, answerValue: (factorA / 100) * factorB };
+              })()
+            : (() => {
+                const factorA = randSeedIntRange(2, maxFactor);
+                const factorB = randSeedIntRange(2, maxFactor);
+                return { expression: `${factorA} * ${factorB}`, answerValue: factorA * factorB };
+              })();
       const challengeConfig: MathChallengeConfig = {
         mode,
-        factorA,
-        factorB,
+        ...problem,
         buttonActions: [],
         answer: correct => {
           if (correct) {
