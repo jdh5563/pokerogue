@@ -14,7 +14,10 @@ import type { CustomModifierSettings } from "#modifiers/modifier-type";
 import { ModifierTypeOption, upgradeModifierTypeOption } from "#modifiers/modifier-type";
 import {
   evaluateOrderOfOperations,
+  generateAdditionSubtractionProblem,
+  generateDivisionProblem,
   generateOrderOfOperationsProblem,
+  generateUnitConversionProblem,
   getMathChallengeMaxFactor,
   SelectModifierPhase,
 } from "#phases/select-modifier-phase";
@@ -105,10 +108,10 @@ describe("SelectModifierPhase", () => {
   it("should evaluate order of operations using PEMDAS", () => {
     expect(evaluateOrderOfOperations("2+3x4")).toBe(14);
     expect(evaluateOrderOfOperations("(2+3)x4")).toBe(20);
-    expect(evaluateOrderOfOperations("18/3+2x4")).toBe(14);
-    expect(evaluateOrderOfOperations("20/(2+3)")).toBe(4);
-    expect(() => evaluateOrderOfOperations("5/2")).toThrow();
-    expect(() => evaluateOrderOfOperations("5/0")).toThrow();
+    expect(evaluateOrderOfOperations("18÷3+2x4")).toBe(14);
+    expect(evaluateOrderOfOperations("20÷(2+3)")).toBe(4);
+    expect(() => evaluateOrderOfOperations("5÷2")).toThrow();
+    expect(() => evaluateOrderOfOperations("5÷0")).toThrow();
   });
 
   it("should generate valid order of operations problems", () => {
@@ -119,6 +122,50 @@ describe("SelectModifierPhase", () => {
     expect(numbers.length).toBeLessThanOrEqual(6);
     expect(numbers.every(number => Number(number) >= 1 && Number(number) <= 12)).toBe(true);
     expect(problem.answerValue).toBe(evaluateOrderOfOperations(problem.expression));
+  });
+
+  it("should generate valid addition and subtraction problems", () => {
+    const problem = generateAdditionSubtractionProblem();
+    const match = problem.expression.match(/^(\d{3,4}) ([+-]) (\d{3,4})$/);
+
+    expect(match).not.toBeNull();
+    const left = Number(match![1]);
+    const right = Number(match![3]);
+    expect(problem.answerValue).toBe(match![2] === "+" ? left + right : left - right);
+  });
+
+  it("should generate whole-number division problems within wave ranges", () => {
+    for (const waveIndex of [1, 50, 51, 100, 101, 200]) {
+      for (let i = 0; i < 10; i++) {
+        const problem = generateDivisionProblem(waveIndex);
+        const match = problem.expression.match(/^(\d+) ÷ (\d+)$/);
+
+        expect(match).not.toBeNull();
+        const dividend = Number(match![1]);
+        const divisor = Number(match![2]);
+        const dividendMax = waveIndex <= 50 ? 100 : waveIndex <= 100 ? 500 : 1000;
+        const divisorMax = waveIndex <= 50 ? 12 : waveIndex <= 100 ? 25 : 50;
+        expect(dividend).toBeGreaterThanOrEqual(10);
+        expect(dividend).toBeLessThanOrEqual(dividendMax);
+        expect(divisor).toBeGreaterThanOrEqual(2);
+        expect(divisor).toBeLessThanOrEqual(divisorMax);
+        expect(problem.answerValue).toBeGreaterThan(1);
+        expect(problem.answerValue).toBe(dividend / divisor);
+      }
+    }
+  });
+
+  it("should generate valid unit conversion problems", () => {
+    for (let i = 0; i < 20; i++) {
+      const problem = generateUnitConversionProblem();
+      expect(problem.expression).toMatch(
+        /^.+ converted to (inches|feet|centimeters|meters|kilometers|grams|kilograms)$/,
+      );
+      expect(problem.answerValue).toBe(Number(problem.answerValue.toFixed(3)));
+      if (problem.expression.includes("feet") || problem.expression.includes("inches")) {
+        expect(problem.expression).not.toMatch(/\.\d/);
+      }
+    }
   });
 
   it("should upgrade a free modifier option without mutating the original type", () => {

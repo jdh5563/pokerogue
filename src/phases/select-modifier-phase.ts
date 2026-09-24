@@ -43,10 +43,10 @@ export function getMathChallengeMaxFactor(waveIndex: number): number {
   return Math.min(100, 12 + Math.floor((progression * 88) / 149));
 }
 
-const ORDER_OPERATORS = ["+", "-", "x", "/"] as const;
+const ORDER_OPERATORS = ["+", "-", "x", "÷"] as const;
 
 export function evaluateOrderOfOperations(expression: string): number {
-  const tokens = expression.match(/\d+|[()+\-x/]/g) ?? [];
+  const tokens = expression.match(/\d+|[()+\-x÷]/g) ?? [];
   let position = 0;
 
   const parseExpression = (): number => {
@@ -61,10 +61,10 @@ export function evaluateOrderOfOperations(expression: string): number {
 
   const parseTerm = (): number => {
     let value = parsePrimary();
-    while (tokens[position] === "x" || tokens[position] === "/") {
+    while (tokens[position] === "x" || tokens[position] === "÷") {
       const operator = tokens[position++];
       const right = parsePrimary();
-      if (operator === "/") {
+      if (operator === "÷") {
         if (right === 0 || value % right !== 0) {
           throw new Error("Invalid division");
         }
@@ -124,11 +124,132 @@ export function generateOrderOfOperationsProblem(): { expression: string; answer
     }
     try {
       return { expression, answerValue: evaluateOrderOfOperations(expression) };
-    } catch {
-      continue;
-    }
+    } catch {}
   }
   return { expression: "1+1+1", answerValue: 3 };
+}
+
+export function generateAdditionSubtractionProblem(): { expression: string; answerValue: number } {
+  const generateNumber = () => {
+    const min = randSeedInt(2) === 0 ? 100 : 1000;
+    return randSeedIntRange(min, min === 100 ? 999 : 9999);
+  };
+  const left = generateNumber();
+  const right = generateNumber();
+  const operator = randSeedInt(2) === 0 ? "+" : "-";
+
+  return {
+    expression: `${left} ${operator} ${right}`,
+    answerValue: operator === "+" ? left + right : left - right,
+  };
+}
+
+const UNIT_CONVERSIONS = [
+  "feetToInches",
+  "inchesToFeet",
+  "metersToCentimeters",
+  "centimetersToMeters",
+  "kilometersToMeters",
+  "metersToKilometers",
+  "kilogramsToGrams",
+  "gramsToKilograms",
+] as const;
+
+function roundMeasurement(value: number): number {
+  return Number(value.toFixed(3));
+}
+
+export function generateUnitConversionProblem(): { expression: string; answerValue: number } {
+  const conversion = UNIT_CONVERSIONS[randSeedInt(UNIT_CONVERSIONS.length)];
+  switch (conversion) {
+    case "feetToInches": {
+      const feet = randSeedIntRange(1, 20);
+      const inches = randSeedIntRange(0, 11);
+      const expression = inches ? `${feet} feet and ${inches} inches` : `${feet} feet`;
+      return { expression: `${expression} converted to inches`, answerValue: feet * 12 + inches };
+    }
+    case "inchesToFeet": {
+      const inches = randSeedIntRange(1, 240);
+      return { expression: `${inches} inches converted to feet`, answerValue: roundMeasurement(inches / 12) };
+    }
+    case "metersToCentimeters": {
+      const meters = randSeedIntRange(1, 1000);
+      return { expression: `${meters} meters converted to centimeters`, answerValue: meters * 100 };
+    }
+    case "centimetersToMeters": {
+      const centimeters = randSeedIntRange(1, 1000);
+      return {
+        expression: `${centimeters} centimeters converted to meters`,
+        answerValue: roundMeasurement(centimeters / 100),
+      };
+    }
+    case "kilometersToMeters": {
+      const kilometers = roundMeasurement(randSeedIntRange(1, 100000) / 1000);
+      return {
+        expression: `${kilometers} kilometers converted to meters`,
+        answerValue: roundMeasurement(kilometers * 1000),
+      };
+    }
+    case "metersToKilometers": {
+      const meters = randSeedIntRange(1, 1000);
+      return { expression: `${meters} meters converted to kilometers`, answerValue: roundMeasurement(meters / 1000) };
+    }
+    case "kilogramsToGrams": {
+      const kilograms = roundMeasurement(randSeedIntRange(1, 100000) / 1000);
+      return {
+        expression: `${kilograms} kilograms converted to grams`,
+        answerValue: roundMeasurement(kilograms * 1000),
+      };
+    }
+    case "gramsToKilograms": {
+      const grams = randSeedIntRange(1, 100000);
+      return { expression: `${grams} grams converted to kilograms`, answerValue: roundMeasurement(grams / 1000) };
+    }
+  }
+}
+
+export function generateDivisionProblem(waveIndex: number): { expression: string; answerValue: number } {
+  const dividendMax = waveIndex <= 50 ? 100 : waveIndex <= 100 ? 500 : 1000;
+  const divisorMax = waveIndex <= 50 ? 12 : waveIndex <= 100 ? 25 : 50;
+
+  for (let attempt = 0; attempt < 100; attempt++) {
+    const dividend = randSeedIntRange(10, dividendMax);
+    const divisor = randSeedIntRange(2, divisorMax);
+    if (dividend % divisor === 0 && dividend / divisor > 1) {
+      return { expression: `${dividend} ÷ ${divisor}`, answerValue: dividend / divisor };
+    }
+  }
+
+  return { expression: "4 ÷ 2", answerValue: 2 };
+}
+
+function generateMathChallengeProblem(
+  mode: MathChallengeMode,
+  maxFactor: number,
+): {
+  expression: string;
+  answerValue: number;
+} {
+  if (mode === MathChallengeMode.ORDER_OF_OPERATIONS) {
+    return generateOrderOfOperationsProblem();
+  }
+  if (mode === MathChallengeMode.ADDITION_SUBTRACTION) {
+    return generateAdditionSubtractionProblem();
+  }
+  if (mode === MathChallengeMode.UNIT_CONVERSION) {
+    return generateUnitConversionProblem();
+  }
+  if (mode === MathChallengeMode.DIVISION) {
+    return generateDivisionProblem(globalScene.currentBattle.waveIndex);
+  }
+  if (mode === MathChallengeMode.PERCENTAGE) {
+    const factorA = randSeedIntRange(1, 99);
+    const factorB = randSeedIntRange(1, 1000);
+    return { expression: `${factorA}% of ${factorB}`, answerValue: (factorA / 100) * factorB };
+  }
+  const factorA = randSeedIntRange(2, maxFactor);
+  const factorB = randSeedIntRange(2, maxFactor);
+  return { expression: `${factorA} * ${factorB}`, answerValue: factorA * factorB };
 }
 
 export class SelectModifierPhase extends BattlePhase {
@@ -235,20 +356,7 @@ export class SelectModifierPhase extends BattlePhase {
         globalScene.mathChallengeModes.length > 0 ? globalScene.mathChallengeModes : [MathChallengeMode.MULTIPLICATION];
       const mode = selectedModes[randSeedInt(selectedModes.length)];
       const maxFactor = getMathChallengeMaxFactor(globalScene.currentBattle.waveIndex);
-      const problem =
-        mode === MathChallengeMode.ORDER_OF_OPERATIONS
-          ? generateOrderOfOperationsProblem()
-          : mode === MathChallengeMode.PERCENTAGE
-            ? (() => {
-                const factorA = randSeedIntRange(1, 99);
-                const factorB = randSeedIntRange(1, 1000);
-                return { expression: `${factorA}% of ${factorB}`, answerValue: (factorA / 100) * factorB };
-              })()
-            : (() => {
-                const factorA = randSeedIntRange(2, maxFactor);
-                const factorB = randSeedIntRange(2, maxFactor);
-                return { expression: `${factorA} * ${factorB}`, answerValue: factorA * factorB };
-              })();
+      const problem = generateMathChallengeProblem(mode, maxFactor);
       const challengeConfig: MathChallengeConfig = {
         mode,
         ...problem,

@@ -220,6 +220,9 @@ export class TitlePhase extends Phase {
       [MathChallengeMode.MULTIPLICATION]: i18next.t("battle:mathModes.multiplication"),
       [MathChallengeMode.PERCENTAGE]: i18next.t("battle:mathModes.percentage"),
       [MathChallengeMode.ORDER_OF_OPERATIONS]: i18next.t("battle:mathModes.orderOfOperations"),
+      [MathChallengeMode.ADDITION_SUBTRACTION]: i18next.t("battle:mathModes.additionSubtraction"),
+      [MathChallengeMode.UNIT_CONVERSION]: i18next.t("battle:mathModes.unitConversion"),
+      [MathChallengeMode.DIVISION]: i18next.t("battle:mathModes.division"),
     };
     const showSelection = () => {
       const options: OptionSelectItem[] = (Object.values(MathChallengeMode) as MathChallengeMode[]).map(mode => ({
@@ -253,7 +256,7 @@ export class TitlePhase extends Phase {
         },
       });
       ui.setMode(UiMode.MESSAGE).then(() => {
-        ui.setMode(UiMode.OPTION_SELECT, { options, yOffset: 48, blockCancelButton: true });
+        ui.setMode(UiMode.OPTION_SELECT, { options, maxOptions: 6, yOffset: 48, blockCancelButton: true });
       });
     };
     showSelection();

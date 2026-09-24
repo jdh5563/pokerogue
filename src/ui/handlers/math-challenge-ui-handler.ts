@@ -17,7 +17,11 @@ export class MathChallengeUiHandler extends FormModalUiHandler {
   }
 
   getWidth(_config?: ModalConfig): number {
-    return 180;
+    return 225;
+  }
+
+  override getHeight(_config?: ModalConfig): number {
+    return 111;
   }
 
   getMargin(_config?: ModalConfig): [number, number, number, number] {
@@ -26,6 +30,16 @@ export class MathChallengeUiHandler extends FormModalUiHandler {
 
   getButtonLabels(_config?: ModalConfig): string[] {
     return [i18next.t("menu:continue")];
+  }
+
+  override updateContainer(config?: ModalConfig): void {
+    super.updateContainer(config);
+
+    this.titleText.setWordWrapWidth((this.getWidth(config) - 20) / this.titleText.scaleX).setAlign("center");
+    const buttonHeight = this.buttonBgs[0]?.height ?? 16;
+    const fieldY = this.getHeight(config) - buttonHeight - 30;
+    this.formLabels[0]?.setY(fieldY);
+    this.inputContainers[0]?.setY(fieldY - 3);
   }
 
   override getInputFieldConfigs(): InputFieldConfig[] {
