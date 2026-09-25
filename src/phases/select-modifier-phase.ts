@@ -223,6 +223,54 @@ export function generateDivisionProblem(waveIndex: number): { expression: string
   return { expression: "4 ÷ 2", answerValue: 2 };
 }
 
+const ONE_VARIABLE_VARIABLES = ["a", "b", "y", "n", "m", "△", "□"] as const;
+
+export function generateOneVariableEquationProblem(): { expression: string; answerValue: number } {
+  const variable = ONE_VARIABLE_VARIABLES[randSeedInt(ONE_VARIABLE_VARIABLES.length)];
+  const answer = randSeedIntRange(1, 20);
+  const template = randSeedInt(4);
+
+  if (template === 0) {
+    const coefficient = randSeedIntRange(2, 12);
+    const constant = randSeedIntRange(1, 12);
+    const total = coefficient * answer + constant;
+    return {
+      expression: `Solve for ${variable}: ${coefficient} x ${variable} + ${constant} = ${total}`,
+      answerValue: answer,
+    };
+  }
+
+  if (template === 1) {
+    const coefficient = randSeedIntRange(2, 12);
+    const added = randSeedIntRange(1, 12);
+    const total = coefficient * (answer + added);
+    return {
+      expression: `Solve for ${variable}: ${coefficient} x (${variable} + ${added}) = ${total}`,
+      answerValue: answer,
+    };
+  }
+
+  if (template === 2) {
+    const coefficient = randSeedIntRange(2, 12);
+    const subtracted = randSeedIntRange(1, 12);
+    const answerValue = randSeedIntRange(subtracted + 1, subtracted + 20);
+    const total = coefficient * (answerValue - subtracted);
+    return {
+      expression: `Solve for ${variable}: ${coefficient} x (${variable} - ${subtracted}) = ${total}`,
+      answerValue,
+    };
+  }
+
+  const divisor = randSeedIntRange(2, 12);
+  const offset = randSeedIntRange(1, 10);
+  const total = answer + offset;
+  const adjustedTotal = total * divisor;
+  return {
+    expression: `Solve for ${variable}: ${variable} ÷ ${divisor} + ${offset} = ${adjustedTotal / divisor}`,
+    answerValue: answer,
+  };
+}
+
 function generateMathChallengeProblem(
   mode: MathChallengeMode,
   maxFactor: number,
@@ -242,6 +290,9 @@ function generateMathChallengeProblem(
   if (mode === MathChallengeMode.DIVISION) {
     return generateDivisionProblem(globalScene.currentBattle.waveIndex);
   }
+  if (mode === MathChallengeMode.ONE_VARIABLE_EQUATION) {
+    return generateOneVariableEquationProblem();
+  }
   if (mode === MathChallengeMode.PERCENTAGE) {
     const factorA = randSeedIntRange(1, 99);
     const factorB = randSeedIntRange(1, 1000);
@@ -249,7 +300,7 @@ function generateMathChallengeProblem(
   }
   const factorA = randSeedIntRange(2, maxFactor);
   const factorB = randSeedIntRange(2, maxFactor);
-  return { expression: `${factorA} * ${factorB}`, answerValue: factorA * factorB };
+  return { expression: `${factorA} x ${factorB}`, answerValue: factorA * factorB };
 }
 
 export class SelectModifierPhase extends BattlePhase {

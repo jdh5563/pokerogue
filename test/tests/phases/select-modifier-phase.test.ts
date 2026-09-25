@@ -16,6 +16,7 @@ import {
   evaluateOrderOfOperations,
   generateAdditionSubtractionProblem,
   generateDivisionProblem,
+  generateOneVariableEquationProblem,
   generateOrderOfOperationsProblem,
   generateUnitConversionProblem,
   getMathChallengeMaxFactor,
@@ -166,6 +167,15 @@ describe("SelectModifierPhase", () => {
         expect(problem.expression).not.toMatch(/\.\d/);
       }
     }
+  });
+
+  it("should generate valid one-variable equation problems", () => {
+    const problem = generateOneVariableEquationProblem();
+    const match = problem.expression.match(/^Solve for .+: .+ = .+$/);
+
+    expect(match).not.toBeNull();
+    expect(problem.answerValue).toBeGreaterThanOrEqual(1);
+    expect(problem.expression).toContain("Solve for");
   });
 
   it("should upgrade a free modifier option without mutating the original type", () => {

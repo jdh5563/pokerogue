@@ -5,4 +5,5 @@ export enum MathChallengeMode {
   ADDITION_SUBTRACTION = "additionSubtraction",
   UNIT_CONVERSION = "unitConversion",
   DIVISION = "division",
+  ONE_VARIABLE_EQUATION = "oneVariableEquation",
 }

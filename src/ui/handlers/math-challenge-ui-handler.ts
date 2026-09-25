@@ -1,4 +1,4 @@
-import type { MathChallengeMode } from "#enums/math-challenge-mode";
+import { MathChallengeMode } from "#enums/math-challenge-mode";
 import type { ModalConfig } from "#types/ui-types";
 import type { InputFieldConfig } from "#ui/form-modal-ui-handler";
 import { FormModalUiHandler } from "#ui/form-modal-ui-handler";
@@ -13,6 +13,9 @@ export interface MathChallengeConfig extends ModalConfig {
 
 export class MathChallengeUiHandler extends FormModalUiHandler {
   getModalTitle(config?: MathChallengeConfig): string {
+    if (config?.mode === MathChallengeMode.ONE_VARIABLE_EQUATION) {
+      return config.expression;
+    }
     return i18next.t("battle:mathChallenge.question", { expression: config?.expression });
   }
 

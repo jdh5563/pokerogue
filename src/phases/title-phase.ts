@@ -223,6 +223,7 @@ export class TitlePhase extends Phase {
       [MathChallengeMode.ADDITION_SUBTRACTION]: i18next.t("battle:mathModes.additionSubtraction"),
       [MathChallengeMode.UNIT_CONVERSION]: i18next.t("battle:mathModes.unitConversion"),
       [MathChallengeMode.DIVISION]: i18next.t("battle:mathModes.division"),
+      [MathChallengeMode.ONE_VARIABLE_EQUATION]: i18next.t("battle:mathModes.oneVariableEquation"),
     };
     const showSelection = () => {
       const options: OptionSelectItem[] = (Object.values(MathChallengeMode) as MathChallengeMode[]).map(mode => ({
