@@ -19,6 +19,20 @@ PokéRogue is a browser based Pokémon fangame heavily inspired by the roguelite
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md), this includes instructions on how to set up the game locally.
 
+# Classroom Offline Build
+
+Build a static classroom copy with local-only saves:
+
+```sh
+pnpm build:classroom
+```
+
+Deploy the generated `dist/` directory from a static web host. The classroom build skips account login, does not make runtime API requests, and stores one `Guest` save in the browser's local storage. Use a separate browser or operating-system profile for each computer that needs separate progress.
+
+Students can export and import system and session saves from **Manage Data**. Clearing browser data, using private browsing, or changing browser profiles can remove access to local progress. Local save data is user-editable and is not cloud-backed.
+
+Before publishing a hosted copy, preserve the license and notice requirements described below and in the files under `LICENSES/`, `assets/`, and `assets/LICENSES/`.
+
 # 📝 Credits
 
 > If this project contains assets you have produced and you do not see your name, **please** reach out, either [here on GitHub](https://github.com/pagefaultgames/pokerogue/issues/new) or via [Discord](https://discord.gg/pokerogue).

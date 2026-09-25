@@ -15,6 +15,9 @@ export const isBeta = import.meta.env.MODE === "beta";
 /** `true` if running via "app" mode (`pnpm build:app` which runs `vite build --mode app`) */
 export const isApp = import.meta.env.MODE === "app";
 
+/** `true` when running the static classroom build with no runtime API access. */
+export const offlineMode = import.meta.env.VITE_OFFLINE_MODE === "1";
+
 /** `true` if running automated tests via Vitest. */
 export const IS_TEST = import.meta.env.MODE === "test";
 

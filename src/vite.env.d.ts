@@ -8,9 +8,10 @@ type HTTP_URL = `http${"" | "s"}://${string}`;
 interface ImportMetaEnv {
   // TODO: There doesn't appear to be a way to override Vite's definition of MODE;
   // it still shows up as "string"...
-  readonly MODE: "development" | "beta" | "production" | "test" | "app";
+  readonly MODE: "development" | "beta" | "production" | "test" | "app" | "classroom";
   readonly VITE_PORT?: `${number}`;
   readonly VITE_BYPASS_LOGIN?: "0" | "1";
+  readonly VITE_OFFLINE_MODE?: "0" | "1";
   readonly VITE_BYPASS_TUTORIAL?: "0" | "1";
   readonly VITE_API_BASE_URL?: HTTP_URL;
   readonly VITE_SERVER_URL?: HTTP_URL;

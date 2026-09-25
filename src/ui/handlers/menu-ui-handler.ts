@@ -3,7 +3,7 @@ import { loggedInUser, updateUserInfo } from "#app/account";
 import { audioManager } from "#app/global-audio-manager";
 import { globalScene } from "#app/global-scene";
 import { handleTutorial, Tutorial } from "#app/tutorial";
-import { bypassLogin, isApp, isBeta, isDev } from "#constants/app-constants";
+import { bypassLogin, isApp, isBeta, isDev, offlineMode } from "#constants/app-constants";
 import { AdminMode, getAdminModeName } from "#enums/admin-mode";
 import { Button } from "#enums/buttons";
 import { GameDataType } from "#enums/game-data-type";
@@ -68,6 +68,7 @@ export class MenuUiHandler extends OptionSelectUiHandler {
         options: [MenuOptions.EGG_GACHA, MenuOptions.EGG_LIST],
       },
       { excluded: bypassLogin, options: [MenuOptions.LOG_OUT] },
+      { excluded: offlineMode, options: [MenuOptions.COMMUNITY] },
       { excluded: !globalScene.currentBattle, options: [MenuOptions.SAVE_AND_QUIT] },
     ];
   }
@@ -233,7 +234,7 @@ export class MenuUiHandler extends OptionSelectUiHandler {
       });
     };
 
-    if (isBeta || isDev || isApp) {
+    if (isBeta || isDev || isApp || offlineMode) {
       manageDataOptions.push({
         label: i18next.t("menuUiHandler:importSession"),
         handler: () => {
@@ -307,24 +308,30 @@ export class MenuUiHandler extends OptionSelectUiHandler {
       },
       keepOpen: true,
     });
-    if (!bypassLogin) {
+    if (!bypassLogin || offlineMode) {
       manageDataOptions.push({
         label: i18next.t("menuUiHandler:clearLocalData"),
         handler: () => {
           ui.revertMode();
-          ui.showText(i18next.t("menuUiHandler:clearLocalDataWarning"), null, () => {
-            const config: ConfirmModeConfig = {
-              yesHandler: () => {
-                globalScene.gameData.clearLocalData();
-                window.location.reload();
-              },
-              noHandler: () => {
-                globalScene.ui.revertMode();
-                globalScene.ui.showText("", 0);
-              },
-            };
-            ui.setOverlayMode(UiMode.CONFIRM, config);
-          });
+          ui.showText(
+            i18next.t(
+              offlineMode ? "menuUiHandler:clearLocalDataOfflineWarning" : "menuUiHandler:clearLocalDataWarning",
+            ),
+            null,
+            () => {
+              const config: ConfirmModeConfig = {
+                yesHandler: () => {
+                  globalScene.gameData.clearLocalData();
+                  window.location.reload();
+                },
+                noHandler: () => {
+                  globalScene.ui.revertMode();
+                  globalScene.ui.showText("", 0);
+                },
+              };
+              ui.setOverlayMode(UiMode.CONFIRM, config);
+            },
+          );
           return true;
         },
         keepOpen: true,
@@ -457,7 +464,7 @@ export class MenuUiHandler extends OptionSelectUiHandler {
         keepOpen: true,
       },
     ];
-    if (bypassLogin || loggedInUser?.hasAdminRole) {
+    if (!bypassLogin && loggedInUser?.hasAdminRole) {
       communityOptions.push({
         label: "Admin",
         handler: () => {

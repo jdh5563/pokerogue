@@ -1,4 +1,5 @@
 import { SESSION_ID_COOKIE_NAME } from "#app/constants";
+import { offlineMode } from "#constants/app-constants";
 import { version } from "#package.json";
 import { getCookie } from "#utils/cookies";
 import type { SetRequired, UndefinedOnPartialDeep } from "type-fest";
@@ -81,6 +82,10 @@ export abstract class ApiBase {
    * @param config - The request configuration
    */
   protected async doFetch(path: string, config: DoFetchConfig): Promise<Response> {
+    if (offlineMode) {
+      throw new Error(`Network requests are disabled in offline mode: ${config.method} ${path}`);
+    }
+
     config.headers = {
       ...config.headers,
       Authorization: getCookie(SESSION_ID_COOKIE_NAME),

@@ -272,7 +272,13 @@ export class GameData {
       typeof v === "bigint" ? (v <= maxIntAttrValue ? Number(v) : v.toString()) : v,
     );
 
-    localStorage.setItem(`data_${loggedInUser?.username}`, encrypt(systemData, bypassLogin));
+    try {
+      localStorage.setItem(`data_${loggedInUser?.username}`, encrypt(systemData, bypassLogin));
+    } catch (error) {
+      globalScene.ui.savingIcon.hide();
+      console.error("Could not save system data locally!", error);
+      return false;
+    }
 
     if (bypassLogin) {
       globalScene.ui.savingIcon.hide();
@@ -1230,20 +1236,26 @@ export class GameData {
       clientSessionId,
     };
 
-    localStorage.setItem(
-      `data_${loggedInUser?.username}`,
-      encrypt(
-        JSON.stringify(systemData, (_k: any, v: any) =>
-          typeof v === "bigint" ? (v <= maxIntAttrValue ? Number(v) : v.toString()) : v,
+    try {
+      localStorage.setItem(
+        `data_${loggedInUser?.username}`,
+        encrypt(
+          JSON.stringify(systemData, (_k: any, v: any) =>
+            typeof v === "bigint" ? (v <= maxIntAttrValue ? Number(v) : v.toString()) : v,
+          ),
+          bypassLogin,
         ),
-        bypassLogin,
-      ),
-    );
+      );
 
-    localStorage.setItem(
-      getSessionDataLocalStorageKey(globalScene.sessionSlotId),
-      encrypt(JSON.stringify(sessionData), bypassLogin),
-    );
+      localStorage.setItem(
+        getSessionDataLocalStorageKey(globalScene.sessionSlotId),
+        encrypt(JSON.stringify(sessionData), bypassLogin),
+      );
+    } catch (error) {
+      globalScene.ui.savingIcon.hide();
+      console.error("Could not save game data locally!", error);
+      return false;
+    }
 
     console.debug(`Session data saved to slot ${globalScene.sessionSlotId}!`);
 
